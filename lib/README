@@ -1,0 +1,9 @@
+
+This directory is intended for project specific (private) libraries.
+PlatformIO will compile them to static libraries and link into the executable file.
+
+Each library should be placed in its own folder, e.g. lib/MyLib/src/MyLib.cpp
+and lib/MyLib/src/MyLib.h.
+
+More information about PlatformIO Library Dependency Finder:
+https://docs.platformio.org/page/librarymanager/ldf.html

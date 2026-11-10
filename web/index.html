@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>HA Panel · config</title>
+<style>
+:root{--bg:#0b0f14;--p:#121821;--p2:#1a2230;--b:#263243;--t:#d7dde5;--m:#7f8c9c;--a:#39d98a;--a2:#5cc8ff;--w:#f0b429;--e:#ff6b6b;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--t);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:70px}
+a{color:var(--a2)}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:10px 14px;background:var(--p)}
+header h1{margin:0;font:600 17px var(--mono);color:var(--a)}
+header h1::before{content:"> ";color:var(--m)}
+#hid{color:var(--m);font:13px var(--mono)}
+.badges{display:flex;gap:5px;margin-left:auto}
+.bd{font:12px var(--mono);padding:2px 8px;border:1px solid var(--b);border-radius:20px;color:var(--m)}
+.bd.ok{color:var(--a);border-color:#1f5d40}.bd.w{color:var(--w);border-color:#6b5310}.bd.e{color:var(--e);border-color:#6d2525}
+nav{display:flex;gap:2px;overflow-x:auto;padding:0 8px;background:var(--p);border-bottom:1px solid var(--b);position:sticky;top:0;z-index:5}
+nav button{background:none;border:0;border-bottom:2px solid transparent;border-radius:0;color:var(--m);padding:10px 11px;font:14px var(--mono);white-space:nowrap}
+nav button.on{color:var(--t);border-bottom-color:var(--a)}
+main{max-width:1100px;margin:0 auto;padding:14px}
+main>section{display:none}main>section.on{display:block}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px;margin-bottom:12px}
+.card{background:var(--p);border:1px solid var(--b);border-radius:8px;padding:12px 14px;min-width:0}
+.card.full{grid-column:1/-1}
+h2{font:600 13px var(--mono);margin:0 0 10px;color:var(--a2);text-transform:uppercase;letter-spacing:.06em}
+h2::before{content:"// ";color:var(--m)}
+.muted{color:var(--m)}
+button{font:inherit;font-size:14px;color:var(--t);background:var(--p2);border:1px solid var(--b);border-radius:6px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--m)}
+button.pri{background:#143826;border-color:#2b7a52;color:#c4f7dc}
+button.del{color:var(--e)}
+button:disabled{opacity:.45;cursor:default}
+input,select{width:100%;background:#080b10;color:var(--t);border:1px solid var(--b);border-radius:6px;padding:7px 9px;font:14px var(--mono)}
+input:focus,select:focus{outline:1px solid var(--a);border-color:var(--a)}
+input[type=checkbox]{width:18px;height:18px;margin:2px 0 0;accent-color:var(--a)}
+input[type=color]{padding:2px;height:34px}
+input[type=range]{padding:0;accent-color:var(--a)}
+.f{display:block;margin:0 0 10px;min-width:0}
+.f>span{display:block;font-size:12px;color:var(--m);margin-bottom:3px}
+.f.chk{display:flex;gap:8px;align-items:center}.f.chk>span{font-size:14px;color:var(--t);margin:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0;font-size:14px}
+.kv dt{color:var(--m)}.kv dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere}
+.ptab.on{border-color:var(--a);color:var(--a)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:420px;margin:12px 0}
+.tile{display:flex;flex-direction:column;align-items:flex-start;min-height:110px;padding:10px;border-radius:14px;text-align:left;background:linear-gradient(#1e2836,#151c27)}
+.tile b{font:600 12px var(--mono);color:var(--a2);text-transform:uppercase}
+.tile span{font-size:16px;overflow-wrap:anywhere}
+.tile.on{border-color:var(--a);box-shadow:0 0 0 1px var(--a)}
+.tile.empty b{color:var(--m)}
+.preview{position:relative;width:240px;height:240px;border-radius:10px;overflow:hidden;background-size:cover;border:1px solid var(--b)}
+.preview .pt{position:absolute;border-radius:9px;padding:6px;font-size:11px}
+.preview .pt b{display:block;font-size:20px;font-weight:600}
+.preview .nav{position:absolute;left:0;right:0;bottom:0;height:26px;font-size:11px;display:flex;align-items:center;justify-content:center}
+canvas{border-radius:10px;border:1px solid var(--b);max-width:100%}
+progress{width:100%}
+#savebar{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;align-items:center;justify-content:flex-end;padding:10px 16px;background:#1d2a1f;border-top:1px solid #2b7a52;z-index:10}
+#savebar span{margin-right:auto;color:#c4f7dc;font-family:var(--mono)}
+#toast{position:fixed;right:16px;bottom:80px;padding:10px 14px;border-radius:8px;background:var(--p2);border:1px solid var(--b);font-family:var(--mono);opacity:0;transition:opacity .3s;pointer-events:none;z-index:20}
+#toast.show{opacity:1}#toast.err{border-color:#6d2525;color:#ffd0d0}
+@media(max-width:600px){.g2,.g3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><h1>HA Panel</h1><span id="hid"></span><div class="badges"><span id="bWifi" class="bd">wifi</span><span id="bMqtt" class="bd">mqtt</span><span id="bDisp" class="bd">display</span></div></header>
+<nav id="nav"></nav>
+<main>
+<section id="s-status"><div class="cards" id="statusCards"></div></section>
+
+<section id="s-message">
+  <div class="cards">
+    <div class="card">
+      <h2>Send pop-up message</h2>
+      <label class="f"><span>Title</span><input id="msgTitle" maxlength="64"></label>
+      <label class="f"><span>Text</span><input id="msgText" maxlength="512"></label>
+      <div class="g2">
+        <label class="f"><span>Level</span><select id="msgLevel"><option value="info">Info</option><option value="warning">Warning</option><option value="error">Error</option><option value="alarm">Alarm</option></select></label>
+        <label class="f"><span>Buttons</span><select id="msgButtons"><option value="none">Close only</option><option value="ok">OK</option><option value="yes_no">Yes / No</option><option value="ok_cancel">OK / Cancel</option></select></label>
+        <label class="f"><span>Auto-close after (s, 0 = never)</span><input type="number" id="msgTimeout" min="0" max="3600" value="0"></label>
+        <label class="f"><span>ID (optional, returned with the answer)</span><input id="msgId" maxlength="64"></label>
+      </div>
+      <label class="f chk"><input type="checkbox" id="msgWake" checked><span>Turn the screen on</span></label>
+      <div class="row"><button class="pri" id="msgSend">Send</button></div>
+    </div>
+    <div class="card">
+      <h2>Last message</h2>
+      <div id="msgLast" class="muted">No messages</div>
+    </div>
+    <div class="card">
+      <h2>Via MQTT</h2>
+      <p class="muted">Publish plain text or JSON to <code id="msgTopic"></code>, e.g.</p>
+      <pre style="white-space:pre-wrap;font:12px var(--mono)">{"title":"Door","text":"Lock the front door?",
+ "level":"warning","buttons":"yes_no",
+ "wake":true,"timeout":60,"id":"door1"}</pre>
+      <p class="muted">Answers are published to <code id="msgRespTopic"></code> as <code>{"id","title","answer"}</code> with answer yes, no, ok, cancel, dismissed, timeout or replaced.</p>
+    </div>
+  </div>
+</section>
+
+<section id="s-pages">
+  <div class="card full">
+    <h2>Pages</h2>
+    <div class="row" id="pageTabs"></div>
+    <div class="g2">
+      <label class="f"><span>Page name</span><input id="pageName" maxlength="24"></label>
+      <div class="row" style="align-items:flex-end">
+        <button id="pageLeft" title="Move left">&#9664; Move</button>
+        <button id="pageRight" title="Move right">Move &#9654;</button>
+        <button id="pageShow" title="Show this page on the panel">Show on panel</button>
+        <button id="pageDel" class="del">Delete page</button>
+      </div>
+    </div>
+    <div class="grid" id="tileGrid"></div>
+  </div>
+  <div class="card full" id="tileEditor"></div>
+</section>
+
+<section id="s-look">
+  <div class="cards">
+    <div class="card">
+      <h2>Color scheme</h2>
+      <label class="f"><span>Preset</span><select id="preset"><option value="dark">Dark</option><option value="light">Light</option><option value="contrast">High contrast</option><option value="custom">Custom</option></select></label>
+      <div class="g2" id="colors"></div>
+      <label class="f"><span>Tile opacity <b id="opaVal"></b></span><input type="range" min="0" max="100" data-k="theme.tileOpacity" data-after="renderPreview"></label>
+    </div>
+    <div class="card">
+      <h2>Preview</h2>
+      <div class="preview" id="preview"></div>
+      <p class="muted">Changes are applied to the panel when you save.</p>
+    </div>
+    <div class="card">
+      <h2>Background image</h2>
+      <canvas id="bgCanvas" width="240" height="240"></canvas>
+      <label class="f"><span>Choose image (cropped to 480×480)</span><input type="file" id="bgFile" accept="image/*"></label>
+      <div class="row"><button class="pri" id="bgUpload" disabled>Upload</button><button class="del" id="bgRemove">Remove</button></div>
+    </div>
+  </div>
+</section>
+
+<section id="s-display">
+  <div class="cards">
+    <div class="card">
+      <h2>Brightness</h2>
+      <label class="f"><span>Brightness <b data-show="display.brightness"></b></span><input type="range" min="10" max="255" data-k="display.brightness"></label>
+      <label class="f"><span>Dimmed brightness <b data-show="display.dimBrightness"></b></span><input type="range" min="1" max="255" data-k="display.dimBrightness"></label>
+    </div>
+    <div class="card">
+      <h2>Sleep</h2>
+      <div class="g2">
+        <label class="f"><span>Dim after (s, 0 = never)</span><input type="number" min="0" max="3600" data-k="display.dimSeconds"></label>
+        <label class="f"><span>Sleep after (s, 0 = never)</span><input type="number" min="0" max="3600" data-k="display.sleepSeconds"></label>
+      </div>
+      <label class="f chk"><input type="checkbox" data-k="display.returnToFirstPage"><span>Return to first page when sleeping</span></label>
+      <div class="row"><button data-panel="wake">Wake panel</button><button data-panel="sleep">Sleep panel</button></div>
+    </div>
+    <div class="card">
+      <h2>Time</h2>
+      <label class="f"><span>Timezone (POSIX TZ)</span><input data-k="time.timezone" maxlength="64"></label>
+      <label class="f"><span>NTP server</span><input data-k="time.ntpServer" maxlength="64"></label>
+    </div>
+  </div>
+</section>
+
+<section id="s-network">
+  <div class="cards">
+    <div class="card">
+      <h2>WiFi</h2>
+      <label class="f"><span>SSID</span><div class="row" style="margin:0;flex-wrap:nowrap"><input data-k="wifi.ssid" list="ssids" maxlength="32"><button id="scan">Scan</button></div></label>
+      <datalist id="ssids"></datalist>
+      <label class="f"><span>Password</span><input type="password" data-k="wifi.password" maxlength="64" autocomplete="new-password"></label>
+      <label class="f"><span>Hostname</span><input data-k="wifi.hostname" maxlength="32"></label>
+    </div>
+    <div class="card">
+      <h2>MQTT</h2>
+      <div class="g2">
+        <label class="f"><span>Broker host</span><input data-k="mqtt.host" maxlength="64"></label>
+        <label class="f"><span>Port</span><input type="number" min="1" max="65535" data-k="mqtt.port"></label>
+        <label class="f"><span>User</span><input data-k="mqtt.user" maxlength="64" autocomplete="off"></label>
+        <label class="f"><span>Password</span><input type="password" data-k="mqtt.password" maxlength="64" autocomplete="new-password"></label>
+      </div>
+      <label class="f"><span>Base topic</span><input data-k="mqtt.baseTopic" maxlength="64"></label>
+      <label class="f chk"><input type="checkbox" data-k="mqtt.discovery"><span>Home Assistant discovery</span></label>
+      <label class="f"><span>Discovery prefix</span><input data-k="mqtt.discoveryPrefix" maxlength="32"></label>
+      <p class="muted" id="mqttHelp"></p>
+    </div>
+    <div class="card">
+      <h2>Web interface</h2>
+      <label class="f"><span>Password (user "admin", empty = no login)</span><input type="password" data-k="web.password" maxlength="64" autocomplete="new-password"></label>
+    </div>
+  </div>
+</section>
+
+<section id="s-system">
+  <div class="cards">
+    <div class="card">
+      <h2>Firmware update</h2>
+      <p class="muted" id="fwInfo"></p>
+      <label class="f"><span>firmware.bin</span><input type="file" id="otaFile" accept=".bin"></label>
+      <progress id="otaProg" value="0" max="100" hidden></progress>
+      <div class="row"><button class="pri" id="otaBtn" disabled>Upload &amp; install</button></div>
+    </div>
+    <div class="card">
+      <h2>Configuration</h2>
+      <div class="row"><button id="exportBtn">Export</button><label class="f" style="margin:0"><input type="file" id="importFile" accept=".json"></label></div>
+      <p class="muted">Exports mask passwords; importing keeps the current passwords for masked fields.</p>
+    </div>
+    <div class="card">
+      <h2>Device</h2>
+      <div class="row"><button id="rebootBtn">Reboot</button><button class="del" id="resetBtn">Factory reset</button></div>
+    </div>
+    <div class="card">
+      <h2>About</h2>
+      <dl class="kv"><dt>Author</dt><dd>Philipp Albrecht</dd><dt>Email</dt><dd><a href="mailto:philipp@uisa.ch">philipp@uisa.ch</a></dd><dt>Web</dt><dd><a href="https://www.uisa.ch" target="_blank" rel="noopener">www.uisa.ch</a></dd></dl>
+    </div>
+  </div>
+</section>
+</main>
+<div id="savebar" hidden><span>Unsaved changes</span><button id="discard">Discard</button><button class="pri" id="save">Save &amp; apply</button></div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+function h(tag,attrs,...kids){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs||{})){if(k==='on')for(const[ev,fn]of Object.entries(v))e.addEventListener(ev,fn);else if(k in e&&k!=='list')e[k]=v;else e.setAttribute(k,v)}for(const c of kids.flat())if(c!=null)e.append(c instanceof Node?c:String(c));return e}
+function toast(msg,err){const t=$('#toast');t.textContent=msg;t.className='show'+(err?' err':'');clearTimeout(t._t);t._t=setTimeout(()=>t.className='',3000)}
+async function api(path,opts){const r=await fetch(path,opts);const ct=r.headers.get('content-type')||'';const body=ct.includes('json')?await r.json():await r.arrayBuffer();if(!r.ok)throw new Error(body&&body.error||r.statusText);return body}
+const get=(o,p)=>p.split('.').reduce((a,k)=>a==null?a:a[k],o);
+function set(o,p,v){const ks=p.split('.');const last=ks.pop();ks.reduce((a,k)=>a[k]??(a[k]={}),o)[last]=v}
+
+const TABS=[['status','Status'],['message','Message'],['pages','Pages & Tiles'],['look','Appearance'],['display','Display'],['network','Network'],['system','System']];
+let cfg=null,saved=null,dirty=false,status=null,sp=0,st=0;
+
+const TYPES={
+ empty:{n:'Empty',f:[]},
+ thermostat:{n:'Thermostat',c:1,d:{min:5,max:30,step:0.5,decimals:1},f:[['stateTopic','Target temperature state topic'],['valueTopic','Current temperature state topic'],['commandTopic','Target temperature command topic'],['min','Min','n'],['max','Max','n'],['step','Step','n'],['decimals','Decimals','n']]},
+ switch:{n:'Switch',c:1,f:[['stateTopic','State topic'],['commandTopic','Command topic'],['payloadOn','Payload on'],['payloadOff','Payload off'],['labelOn','Label on'],['labelOff','Label off']]},
+ light:{n:'Light',c:1,d:{min:0,max:255},f:[['stateTopic','State topic'],['commandTopic','Command topic'],['payloadOn','Payload on'],['payloadOff','Payload off'],['valueTopic','Brightness state topic'],['valueCommandTopic','Brightness command topic'],['min','Brightness min','n'],['max','Brightness max','n']]},
+ cover:{n:'Cover / blind',c:1,d:{min:0,max:100},f:[['stateTopic','State topic (open / closed / opening / closing)'],['commandTopic','Command topic (receives OPEN / STOP / CLOSE)'],['valueTopic','Position state topic (0-100)'],['valueCommandTopic','Position command topic (0-100)']]},
+ sensor:{n:'Sensor',d:{decimals:1},f:[['stateTopic','State topic'],['unit','Unit'],['decimals','Decimals','n']]},
+ binary_sensor:{n:'Binary sensor',f:[['stateTopic','State topic'],['payloadOn','Payload on'],['labelOn','Label on'],['labelOff','Label off']]},
+ scene:{n:'Scene / script',c:1,d:{payload:'ON'},f:[['commandTopic','Command topic'],['payload','Payload']]},
+ button:{n:'Button',c:1,d:{payload:'PRESS'},f:[['commandTopic','Command topic'],['payload','Payload']]},
+ media:{n:'Media player',c:1,f:[['stateTopic','State topic (playing / paused / idle)'],['valueTopic','Title topic'],['commandTopic','Command topic (receives PLAY_PAUSE / NEXT / PREVIOUS)'],['valueCommandTopic','Volume command topic (0-100)']]},
+ lock:{n:'Lock',c:1,f:[['stateTopic','State topic (LOCKED / UNLOCKED)'],['commandTopic','Command topic (receives LOCK / UNLOCK)']]},
+ fan:{n:'Fan',c:1,d:{min:0,max:100},f:[['stateTopic','State topic'],['commandTopic','Command topic'],['payloadOn','Payload on'],['payloadOff','Payload off'],['valueTopic','Speed state topic (%)'],['valueCommandTopic','Speed command topic (%)']]},
+ clock:{n:'Clock / date',f:[]},
+ page_link:{n:'Page link',f:[['page','Target page','p']]},
+};
+const ICONS=['','power','home','settings','bell','charge','tint','audio','play','up','down','warning','eye','eye_close','wifi','refresh','list','bars','image','gps','call','envelope','ok','loop','shuffle','video','battery','bluetooth','keyboard','drive','file','right'];
+const TILE_DEFAULTS={title:'',icon:'',color:'',confirm:false,payloadOn:'ON',payloadOff:'OFF',min:0,max:100,step:1,decimals:1,page:0};
+const PRESETS={
+ dark:{bg:'#101418',tileBg:'#1E252D',text:'#FFFFFF',textSecondary:'#9AA4AE',accent:'#4FC3F7',on:'#FFB300',off:'#5F6B76',warning:'#E53935',dialog:'#1A2129',tileOpacity:85},
+ light:{bg:'#ECEFF1',tileBg:'#FFFFFF',text:'#1B1F23',textSecondary:'#5F6B76',accent:'#0277BD',on:'#F57C00',off:'#9AA4AE',warning:'#C62828',dialog:'#F5F7F8',tileOpacity:90},
+ contrast:{bg:'#000000',tileBg:'#000000',text:'#FFFFFF',textSecondary:'#FFFF00',accent:'#00E5FF',on:'#FFFF00',off:'#FFFFFF',warning:'#FF1744',dialog:'#000000',tileOpacity:100},
+};
+const COLORS=[['bg','Background'],['tileBg','Tile background'],['text','Text'],['textSecondary','Secondary text'],['accent','Accent'],['on','State on'],['off','State off'],['warning','Warning / error'],['dialog','Dialog background']];
+
+function markDirty(){dirty=true;$('#savebar').hidden=false}
+function clearDirty(){dirty=false;$('#savebar').hidden=true}
+window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
+
+function readEl(el){if(el.type==='checkbox')return el.checked;if(el.type==='number'||el.type==='range')return Number(el.value);return el.value}
+function writeEl(el,v){if(el.type==='checkbox')el.checked=!!v;else el.value=v??''}
+function bindAll(){
+  $$('[data-k]').forEach(el=>{writeEl(el,get(cfg,el.dataset.k));
+    el.oninput=el.onchange=()=>{set(cfg,el.dataset.k,readEl(el));markDirty();showValues();if(el.dataset.after)window[el.dataset.after]()}});
+  showValues();
+}
+function showValues(){$$('[data-show]').forEach(e=>e.textContent=get(cfg,e.dataset.show));$('#opaVal').textContent=cfg.theme.tileOpacity+'%'}
+
+// ---------- tabs ----------
+function showTab(id){$$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===id));$$('main>section').forEach(s=>s.classList.toggle('on',s.id==='s-'+id));location.hash=id;if(id==='look')loadBackground()}
+function buildNav(){const n=$('#nav');TABS.forEach(([id,label])=>n.append(h('button',{'data-t':id,on:{click:()=>showTab(id)}},label)))}
+
+// ---------- status ----------
+function fmtBytes(b){return b>1048576?(b/1048576).toFixed(1)+' MB':(b/1024).toFixed(0)+' KB'}
+function fmtUp(s){const d=Math.floor(s/86400),hh=Math.floor(s/3600)%24,m=Math.floor(s/60)%60;return(d?d+'d ':'')+hh+'h '+m+'m '+(s%60)+'s'}
+function kv(pairs){return h('dl',{className:'kv'},pairs.filter(p=>p[1]!==undefined&&p[1]!=='').flatMap(([k,v])=>[h('dt',{},k),h('dd',{},v)]))}
+function card(title,...kids){return h('div',{className:'card'},h('h2',{},title),...kids)}
+async function loadStatus(){
+  try{status=await api('/api/status')}catch(e){$('#bWifi').className='bd e';return}
+  const s=status,d=s.device,w=s.wifi,m=s.mqtt;
+  $('#hid').textContent=d.hostname+' · '+(w.ip!=='0.0.0.0'?w.ip:(w.apIp||''));
+  $('#bWifi').textContent='wifi '+w.state.toLowerCase();$('#bWifi').className='bd '+(w.state==='Connected'?'ok':'w');
+  $('#bMqtt').textContent='mqtt '+m.state;$('#bMqtt').className='bd '+(m.connected?'ok':m.state==='not configured'?'w':'e');
+  $('#bDisp').textContent='display '+s.display.state;$('#bDisp').className='bd ok';
+  $('#fwInfo').textContent='Running '+d.firmware+' (built '+d.build+'), '+fmtBytes(d.sketchFree)+' free for updates.';
+  $('#mqttHelp').textContent='Panel publishes '+m.baseTopic+'/status, '+m.baseTopic+'/telemetry and listens on '+m.baseTopic+'/cmd/{reboot|wake|sleep|brightness|page|message}.';
+  $('#msgTopic').textContent=m.baseTopic+'/cmd/message';$('#msgRespTopic').textContent=m.baseTopic+'/message/response';
+  const lm=s.message;
+  $('#msgLast').replaceChildren(lm?kv([['Time',lm.time],['Level',lm.level],['Title',lm.title],['Text',lm.text],['Buttons',lm.buttons],['ID',lm.id],['Answer',lm.open?'(open)':lm.answer]]):'No messages');
+  $('#statusCards').replaceChildren(
+    card('Device',kv([['Hostname',d.hostname],['Firmware',d.firmware],['Build',d.build],['Time',d.time],['Uptime',fmtUp(d.uptime)],['Reset reason',d.resetReason],['Heap',fmtBytes(d.heapFree)+' / '+fmtBytes(d.heapTotal)],['PSRAM',fmtBytes(d.psramFree)+' / '+fmtBytes(d.psramTotal)],['Flash',fmtBytes(d.flash)],['Filesystem',fmtBytes(d.fsUsed)+' / '+fmtBytes(d.fsTotal)],['Chip',d.chip+' rev '+d.chipRevision+', '+d.cores+' cores @ '+d.cpuMhz+' MHz']])),
+    card('WiFi',kv([['State',w.state],['SSID',w.ssid],['RSSI',w.rssi+' dBm'],['Channel',w.channel],['IP',w.ip],['Subnet',w.subnet],['Gateway',w.gateway],['DNS',w.dns],['MAC',w.mac],['BSSID',w.bssid],['Setup AP',w.apSsid],['AP IP',w.apIp]])),
+    card('MQTT',kv([['State',m.state],['Broker',m.host?m.host+':'+m.port:'-'],['Base topic',m.baseTopic]])),
+    card('Display',kv([['State',s.display.state],['Page',s.display.page+' / '+s.display.pages],['Background',s.display.background?'yes':'no']])),
+    card('About',kv([['Author',s.author.name],['Email',s.author.email],['Web',s.author.web]])));
+}
+
+// ---------- pages & tiles ----------
+function renderPages(){
+  if(sp>=cfg.pages.length)sp=cfg.pages.length-1;
+  const tabs=$('#pageTabs');tabs.replaceChildren();
+  cfg.pages.forEach((p,i)=>tabs.append(h('button',{className:'ptab'+(i===sp?' on':''),on:{click:()=>{sp=i;st=0;renderPages()}}},(i+1)+'. '+(p.name||'(unnamed)'))));
+  tabs.append(h('button',{disabled:cfg.pages.length>=10,on:{click:addPage}},'+ Page'));
+  const page=cfg.pages[sp];
+  $('#pageName').value=page.name||'';
+  $('#pageLeft').disabled=sp===0;$('#pageRight').disabled=sp===cfg.pages.length-1;$('#pageDel').disabled=cfg.pages.length<=1;
+  const grid=$('#tileGrid');grid.replaceChildren();
+  page.tiles.forEach((t,i)=>grid.append(h('button',{className:'tile'+(i===st?' on':'')+(t.type==='empty'?' empty':''),on:{click:()=>{st=i;renderPages()}}},h('b',{},TYPES[t.type]?.n||t.type),h('span',{},t.title||''))));
+  renderTileEditor();
+}
+function addPage(){cfg.pages.push({name:'Page '+(cfg.pages.length+1),tiles:[0,1,2,3].map(()=>({type:'empty'}))});sp=cfg.pages.length-1;st=0;markDirty();renderPages()}
+function field(label,input){return h('label',{className:'f'},h('span',{},label),input)}
+function renderTileEditor(){
+  const ed=$('#tileEditor');const tile=cfg.pages[sp].tiles[st];const def=TYPES[tile.type]||TYPES.empty;
+  const upd=(k,v)=>{tile[k]=v;markDirty();renderPagesKeepEditor()};
+  const typeSel=h('select',{on:{change:e=>{const ty=e.target.value;const nt=Object.assign({type:ty},TILE_DEFAULTS,TYPES[ty].d||{},{title:tile.title||''});cfg.pages[sp].tiles[st]=nt;markDirty();renderPages()}}},Object.entries(TYPES).map(([k,v])=>h('option',{value:k,selected:k===tile.type},v.n)));
+  const kids=[h('h2',{},'Tile '+(st+1)+' on page '+(sp+1)),field('Type',typeSel)];
+  if(tile.type!=='empty'){
+    const common=h('div',{className:'g3'},
+      field('Title',h('input',{value:tile.title||'',maxLength:32,on:{input:e=>upd('title',e.target.value)}})),
+      field('Icon',h('select',{on:{change:e=>upd('icon',e.target.value)}},ICONS.map(i=>h('option',{value:i,selected:i===(tile.icon||'')},i||'(default)')))),
+      field('Color',h('div',{className:'row',style:'margin:0;flex-wrap:nowrap'},
+        h('input',{type:'checkbox',checked:!!tile.color,on:{change:e=>{upd('color',e.target.checked?'#FFB300':'');renderTileEditor()}}}),
+        h('input',{type:'color',value:tile.color||'#FFB300',disabled:!tile.color,on:{input:e=>upd('color',e.target.value.toUpperCase())}}))));
+    kids.push(common);
+    if(def.c)kids.push(h('label',{className:'f chk'},h('input',{type:'checkbox',checked:!!tile.confirm,on:{change:e=>upd('confirm',e.target.checked)}}),h('span',{},'Ask "Are you sure?" before sending commands')));
+    const g=h('div',{className:'g2'});
+    def.f.forEach(([k,label,kind])=>{
+      let input;
+      if(kind==='p')input=h('select',{on:{change:e=>upd(k,Number(e.target.value))}},cfg.pages.map((p,i)=>h('option',{value:i,selected:i===(tile[k]||0)},(i+1)+'. '+(p.name||''))));
+      else if(kind==='n')input=h('input',{type:'number',step:'any',value:tile[k]??'',on:{input:e=>upd(k,Number(e.target.value))}});
+      else input=h('input',{value:tile[k]??'',maxLength:128,on:{input:e=>upd(k,e.target.value)}});
+      g.append(field(label,input));
+    });
+    kids.push(g);
+    if(def.c&&tile.type!=='scene'&&tile.type!=='button')kids.push(h('p',{className:'muted'},'Tapping this tile opens a detail page with the controls.'));
+  }
+  ed.replaceChildren(...kids);
+}
+function renderPagesKeepEditor(){const g=$('#tileGrid').children[st];const t=cfg.pages[sp].tiles[st];if(g){g.querySelector('span').textContent=t.title||''}}
+function setupPageControls(){
+  $('#pageName').oninput=e=>{cfg.pages[sp].name=e.target.value;markDirty();$('#pageTabs').children[sp].textContent=(sp+1)+'. '+e.target.value};
+  const move=d=>{const p=cfg.pages;[p[sp],p[sp+d]]=[p[sp+d],p[sp]];sp+=d;markDirty();renderPages()};
+  $('#pageLeft').onclick=()=>move(-1);$('#pageRight').onclick=()=>move(1);
+  $('#pageDel').onclick=()=>{if(confirm('Delete page "'+cfg.pages[sp].name+'"?')){cfg.pages.splice(sp,1);sp=Math.max(0,sp-1);markDirty();renderPages()}};
+  $('#pageShow').onclick=()=>panel('page',sp+1);
+}
+
+// ---------- appearance ----------
+function renderColors(){
+  const c=$('#colors');c.replaceChildren();
+  COLORS.forEach(([k,label])=>c.append(field(label,h('input',{type:'color',value:cfg.theme[k],on:{input:e=>{cfg.theme[k]=e.target.value.toUpperCase();cfg.theme.preset='custom';$('#preset').value='custom';markDirty();renderPreview()}}}))));
+  $('#preset').value=cfg.theme.preset in PRESETS?cfg.theme.preset:'custom';
+}
+function hexA(hex,opa){const n=parseInt(hex.slice(1),16);return`rgba(${n>>16},${n>>8&255},${n&255},${opa/100})`}
+let bgUrl='';
+window.renderPreview=function(){
+  const t=cfg.theme,p=$('#preview');p.replaceChildren();
+  p.style.backgroundColor=t.bg;p.style.backgroundImage=bgUrl?`url(${bgUrl})`:'';
+  const page=cfg.pages[0];const gap=6,w=(240-3*gap)/2,hh=(240-26-3*gap)/2;
+  page.tiles.forEach((tile,i)=>{if(tile.type==='empty')return;
+    const on=i%2===0;
+    p.append(h('div',{className:'pt',style:`left:${gap+(i%2)*(w+gap)}px;top:${gap+Math.floor(i/2)*(hh+gap)}px;width:${w}px;height:${hh}px;background:${hexA(t.tileBg,t.tileOpacity)};color:${t.textSecondary}`},
+      h('span',{style:`color:${on?(tile.color||t.on):t.textSecondary}`},'●'),h('b',{style:`color:${t.text}`},tile.type==='clock'?'12:34':on?'On':'Off'),tile.title||''))});
+  p.append(h('div',{className:'nav',style:`background:${hexA(t.tileBg,t.tileOpacity)};color:${t.textSecondary}`},'◀   '+(page.name||'')+'  1/'+(cfg.pages.length+2)+'   ▶'));
+}
+function setupAppearance(){
+  $('#preset').onchange=e=>{const v=e.target.value;if(PRESETS[v])Object.assign(cfg.theme,PRESETS[v]);cfg.theme.preset=v;markDirty();renderColors();bindAll();renderPreview()};
+  let pixels=null;
+  $('#bgFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+    const img=await createImageBitmap(f);const c=document.createElement('canvas');c.width=c.height=480;const x=c.getContext('2d');
+    const s=Math.max(480/img.width,480/img.height);x.drawImage(img,(480-img.width*s)/2,(480-img.height*s)/2,img.width*s,img.height*s);
+    const d=x.getImageData(0,0,480,480).data;pixels=new Uint8Array(480*480*2);
+    for(let i=0,j=0;i<d.length;i+=4,j+=2){const v=((d[i]&0xF8)<<8)|((d[i+1]&0xFC)<<3)|(d[i+2]>>3);pixels[j]=v&255;pixels[j+1]=v>>8}
+    $('#bgCanvas').getContext('2d').drawImage(c,0,0,240,240);bgUrl=c.toDataURL('image/jpeg',.7);renderPreview();$('#bgUpload').disabled=false};
+  $('#bgUpload').onclick=async()=>{if(!pixels)return;const fd=new FormData();fd.append('file',new Blob([pixels]),'bg.bin');
+    $('#bgUpload').disabled=true;try{await api('/api/background',{method:'POST',body:fd});toast('Background uploaded');bgLoaded=true}catch(e){toast(e.message,1);$('#bgUpload').disabled=false}};
+  $('#bgRemove').onclick=async()=>{if(!confirm('Remove background image?'))return;try{await api('/api/background',{method:'DELETE'});bgUrl='';$('#bgCanvas').getContext('2d').clearRect(0,0,240,240);renderPreview();toast('Background removed')}catch(e){toast(e.message,1)}};
+}
+let bgLoaded=false;
+async function loadBackground(){
+  if(bgLoaded)return;bgLoaded=true;
+  try{const buf=new Uint8Array(await api('/api/background'));if(buf.length!==480*480*2)return;
+    const c=document.createElement('canvas');c.width=c.height=480;const x=c.getContext('2d');const id=x.createImageData(480,480);
+    for(let i=0,j=0;j<buf.length;i+=4,j+=2){const v=buf[j]|buf[j+1]<<8;id.data[i]=(v>>8&0xF8);id.data[i+1]=(v>>3&0xFC);id.data[i+2]=(v<<3&0xF8);id.data[i+3]=255}
+    x.putImageData(id,0,0);$('#bgCanvas').getContext('2d').drawImage(c,0,0,240,240);bgUrl=c.toDataURL('image/jpeg',.7);renderPreview()}catch(e){}
+}
+
+// ---------- network ----------
+function setupNetwork(){
+  $('#scan').onclick=async e=>{e.preventDefault();$('#scan').disabled=true;$('#scan').textContent='...';
+    try{const nets=await api('/api/wifi/scan');const seen=new Set();$('#ssids').replaceChildren(...nets.filter(n=>n.ssid&&!seen.has(n.ssid)&&seen.add(n.ssid)).map(n=>h('option',{value:n.ssid},n.rssi+' dBm'+(n.secure?'':' (open)'))));toast(nets.length+' networks found')}catch(err){toast(err.message,1)}
+    $('#scan').disabled=false;$('#scan').textContent='Scan'};
+}
+
+// ---------- system ----------
+async function panel(action,page){try{await api('/api/panel?action='+action+(page?'&page='+page:''),{method:'POST'});toast('Panel: '+action)}catch(e){toast(e.message,1)}}
+function setupSystem(){
+  $('#msgSend').onclick=async()=>{
+    const body={title:$('#msgTitle').value,text:$('#msgText').value,level:$('#msgLevel').value,buttons:$('#msgButtons').value,wake:$('#msgWake').checked,timeout:Number($('#msgTimeout').value)||0};
+    if($('#msgId').value)body.id=$('#msgId').value;
+    try{await api('/api/message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});toast('Message sent');setTimeout(loadStatus,500)}catch(e){toast(e.message,1)}};
+  $$('[data-panel]').forEach(b=>b.onclick=()=>panel(b.dataset.panel));
+  $('#otaFile').onchange=e=>$('#otaBtn').disabled=!e.target.files.length;
+  $('#otaBtn').onclick=()=>{const f=$('#otaFile').files[0];if(!f)return;const fd=new FormData();fd.append('firmware',f,f.name);
+    const x=new XMLHttpRequest(),pr=$('#otaProg');pr.hidden=false;$('#otaBtn').disabled=true;
+    x.upload.onprogress=e=>{if(e.lengthComputable)pr.value=e.loaded/e.total*100};
+    x.onload=()=>{if(x.status===200){toast('Update installed, rebooting...');setTimeout(()=>location.reload(),12000)}else{let m=x.statusText;try{m=JSON.parse(x.responseText).error}catch(e){}toast('Update failed: '+m,1);$('#otaBtn').disabled=false}};
+    x.onerror=()=>{toast('Upload failed',1);$('#otaBtn').disabled=false};x.open('POST','/api/ota');x.send(fd)};
+  $('#exportBtn').onclick=()=>{const a=h('a',{href:URL.createObjectURL(new Blob([JSON.stringify(saved,null,2)],{type:'application/json'})),download:(saved.wifi.hostname||'ha-panel')+'-config.json'});a.click()};
+  $('#importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());if(!confirm('Import and apply this configuration?'))return;await api('/api/config',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(j)});toast('Configuration imported');await loadConfig()}catch(err){toast(err.message,1)}e.target.value=''};
+  $('#rebootBtn').onclick=async()=>{if(!confirm('Reboot the panel?'))return;try{await api('/api/reboot',{method:'POST'});toast('Rebooting...')}catch(e){toast(e.message,1)}};
+  $('#resetBtn').onclick=async()=>{if(!confirm('Reset ALL settings and remove the background image?'))return;try{await api('/api/factory-reset',{method:'POST'});toast('Factory reset, rebooting...')}catch(e){toast(e.message,1)}};
+}
+
+// ---------- config ----------
+async function loadConfig(){cfg=await api('/api/config');saved=JSON.parse(JSON.stringify(cfg));clearDirty();bindAll();renderPages();renderColors();renderPreview()}
+async function save(){
+  $('#save').disabled=true;
+  try{await api('/api/config',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});toast('Saved and applied');await loadConfig();setTimeout(loadStatus,1500)}
+  catch(e){toast('Save failed: '+e.message,1)}
+  $('#save').disabled=false;
+}
+
+async function init(){
+  buildNav();setupPageControls();setupAppearance();setupNetwork();setupSystem();
+  $('#save').onclick=save;$('#discard').onclick=()=>{cfg=JSON.parse(JSON.stringify(saved));clearDirty();bindAll();renderPages();renderColors();renderPreview()};
+  showTab(TABS.some(t=>t[0]===location.hash.slice(1))?location.hash.slice(1):'status');
+  try{await loadConfig()}catch(e){toast('Cannot load config: '+e.message,1)}
+  loadStatus();setInterval(()=>{if(!document.hidden)loadStatus()},5000);
+}
+init();
+</script>
+</body>
+</html>
