@@ -11,6 +11,7 @@
 #include "app/app.h"
 #include "app/config.h"
 #include "app/power.h"
+#include "hw/climate_sensor.h"
 #include "mqtt_service.h"
 #include "ui/background.h"
 #include "ui/message.h"
@@ -161,6 +162,15 @@ void handleStatus() {
     d["pages"] = ui::pageCount();
     d["background"] = ui::backgroundImage() != nullptr;
 
+    JsonObject sensor = doc["sensor"].to<JsonObject>();
+    sensor["available"] = hw::climateAvailable();
+    if (!isnan(app::panelTemperature())) {
+        sensor["temperature"] = roundf(app::panelTemperature() * 10) / 10;
+        sensor["humidity"] = roundf(app::panelHumidity() * 10) / 10;
+        sensor["rawTemperature"] = roundf(hw::climateTemperature() * 10) / 10;
+        sensor["rawHumidity"] = roundf(hw::climateHumidity() * 10) / 10;
+    }
+
     const ui::MessageInfo& msg = ui::lastMessage();
     if (!msg.time.isEmpty()) {
         JsonObject mo = doc["message"].to<JsonObject>();
@@ -309,6 +319,7 @@ void handleBackgroundUpload() {
             uploadError = "";
             uploadSize = 0;
             if (uploadAuthorized) {
+                app::powerBlank(true);
                 uploadFile = LittleFS.open(kBackgroundTmp, "w");
                 if (!uploadFile) {
                     uploadError = "cannot open file";
@@ -333,6 +344,7 @@ void handleBackgroundUpload() {
             }
             if (up.status == UPLOAD_FILE_ABORTED) {
                 uploadError = "upload aborted";
+                app::powerBlank(false);
             }
             break;
     }
@@ -348,12 +360,14 @@ void handleBackgroundDone() {
     }
     if (!uploadError.isEmpty()) {
         LittleFS.remove(kBackgroundTmp);
+        app::powerBlank(false);
         sendError(400, uploadError);
         return;
     }
     LittleFS.remove(ui::kBackgroundPath);
     LittleFS.rename(kBackgroundTmp, ui::kBackgroundPath);
     ui::rebuild(true);
+    app::powerBlank(false);
     sendOk();
 }
 
@@ -364,8 +378,11 @@ void handleOtaUpload() {
             const String& pw = app::config.web.password;
             uploadAuthorized = pw.isEmpty() || server.authenticate("admin", pw.c_str());
             uploadError = "";
-            if (uploadAuthorized && !Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH)) {
-                uploadError = Update.errorString();
+            if (uploadAuthorized) {
+                app::powerBlank(true);
+                if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH)) {
+                    uploadError = Update.errorString();
+                }
             }
             break;
         }
@@ -383,6 +400,7 @@ void handleOtaUpload() {
         case UPLOAD_FILE_ABORTED:
             Update.abort();
             uploadError = "upload aborted";
+            app::powerBlank(false);
             break;
     }
 }
@@ -394,9 +412,11 @@ void handleOtaDone() {
     }
     if (!uploadError.isEmpty()) {
         Update.abort();
+        app::powerBlank(false);
         sendError(400, uploadError);
         return;
     }
+    // Backlight stays off until the reboot.
     sendOk();
     app::scheduleRestart(1000);
 }

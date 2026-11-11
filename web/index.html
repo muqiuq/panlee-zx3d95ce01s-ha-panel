@@ -164,6 +164,18 @@ progress{width:100%}
       <label class="f"><span>Timezone (POSIX TZ)</span><input data-k="time.timezone" maxlength="64"></label>
       <label class="f"><span>NTP server</span><input data-k="time.ntpServer" maxlength="64"></label>
     </div>
+    <div class="card">
+      <h2>Built-in sensor</h2>
+      <div class="g2">
+        <label class="f"><span>Temperature offset (°C)</span><input type="number" step="0.1" min="-20" max="20" data-k="sensor.temperatureOffset"></label>
+        <label class="f"><span>Humidity offset (%)</span><input type="number" step="0.5" min="-50" max="50" data-k="sensor.humidityOffset"></label>
+        <label class="f"><span>Publish every (s)</span><input type="number" min="10" max="3600" data-k="sensor.publishSeconds"></label>
+        <span></span>
+        <label class="f"><span>…or on change of (°C)</span><input type="number" step="0.1" min="0" max="10" data-k="sensor.temperatureDelta"></label>
+        <label class="f"><span>…or on change of (%)</span><input type="number" step="0.5" min="0" max="50" data-k="sensor.humidityDelta"></label>
+      </div>
+      <p class="muted">The sensor sits next to the ESP32 and reads warm; compare with a reference thermometer and set an offset.</p>
+    </div>
   </div>
 </section>
 
@@ -257,6 +269,7 @@ const TYPES={
  fan:{n:'Fan',c:1,d:{min:0,max:100},f:[['stateTopic','State topic'],['commandTopic','Command topic'],['payloadOn','Payload on'],['payloadOff','Payload off'],['valueTopic','Speed state topic (%)'],['valueCommandTopic','Speed command topic (%)']]},
  clock:{n:'Clock / date',f:[]},
  page_link:{n:'Page link',f:[['page','Target page','p']]},
+ panel_climate:{n:'Built-in temperature',f:[['decimals','Decimals','n']]},
 };
 const ICONS=['','power','home','settings','bell','charge','tint','audio','play','up','down','warning','eye','eye_close','wifi','refresh','list','bars','image','gps','call','envelope','ok','loop','shuffle','video','battery','bluetooth','keyboard','drive','file','right'];
 const TILE_DEFAULTS={title:'',icon:'',color:'',confirm:false,payloadOn:'ON',payloadOff:'OFF',min:0,max:100,step:1,decimals:1,page:0};
@@ -306,6 +319,7 @@ async function loadStatus(){
     card('WiFi',kv([['State',w.state],['SSID',w.ssid],['RSSI',w.rssi+' dBm'],['Channel',w.channel],['IP',w.ip],['Subnet',w.subnet],['Gateway',w.gateway],['DNS',w.dns],['MAC',w.mac],['BSSID',w.bssid],['Setup AP',w.apSsid],['AP IP',w.apIp],['Offline for',w.offlineSeconds?fmtUp(w.offlineSeconds):''],['Reboot on loss',w.rebootOnLoss?'after '+w.rebootAfterMinutes+' min':'off']])),
     card('MQTT',kv([['State',m.state],['Broker',m.host?m.host+':'+m.port:'-'],['Base topic',m.baseTopic]])),
     card('Display',kv([['State',s.display.state],['Page',s.display.page+' / '+s.display.pages],['Background',s.display.background?'yes':'no']])),
+    card('Built-in sensor',s.sensor.available?kv([['Temperature',s.sensor.temperature!==undefined?s.sensor.temperature+' °C':'waiting...'],['Humidity',s.sensor.humidity!==undefined?s.sensor.humidity+' %':''],['Raw',s.sensor.rawTemperature!==undefined?s.sensor.rawTemperature+' °C / '+s.sensor.rawHumidity+' %':''],['MQTT topic',m.baseTopic+'/sensor']]):h('p',{className:'muted'},'No SHT20 sensor detected (I2C1, address 0x40).')),
     card('About',kv([['Author',s.author.name],['Email',s.author.email],['Web',s.author.web]])));
 }
 

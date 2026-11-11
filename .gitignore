@@ -1,4 +1,5 @@
 .pio/
+dist/
 include/secrets.h
 src/web/index_html.h
 .vscode/.browse.c_cpp.db*

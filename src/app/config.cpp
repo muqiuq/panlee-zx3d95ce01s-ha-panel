@@ -4,6 +4,8 @@
 #include <LittleFS.h>
 #include <WiFi.h>
 
+#include "hw/climate_sensor.h"
+
 #if __has_include("secrets.h")
 #include "secrets.h"
 #endif
@@ -22,7 +24,7 @@ constexpr const char* kMask = "********";
 
 const char* const kTypeNames[] = {
     "empty", "thermostat", "switch", "light", "cover", "sensor", "binary_sensor",
-    "scene", "button", "media", "lock", "fan", "clock", "page_link",
+    "scene", "button", "media", "lock", "fan", "clock", "page_link", "panel_climate",
 };
 
 String limited(JsonVariantConst v, const String& fallback, size_t maxLen) {
@@ -220,6 +222,13 @@ void configFromJson(JsonVariantConst j, Config& c) {
 
     readSecret(j["web"]["password"], c.web.password);
 
+    JsonVariantConst s = j["sensor"];
+    readNum(s["temperatureOffset"], c.sensor.temperatureOffset, -20.0f, 20.0f);
+    readNum(s["humidityOffset"], c.sensor.humidityOffset, -50.0f, 50.0f);
+    readNum<uint16_t>(s["publishSeconds"], c.sensor.publishSeconds, 10, 3600);
+    readNum(s["temperatureDelta"], c.sensor.temperatureDelta, 0.0f, 10.0f);
+    readNum(s["humidityDelta"], c.sensor.humidityDelta, 0.0f, 50.0f);
+
     JsonArrayConst pages = j["pages"];
     if (!pages.isNull() && pages.size() > 0) {
         c.pages.clear();
@@ -281,6 +290,13 @@ void configToJson(const Config& c, JsonDocument& doc, bool maskSecrets) {
 
     putSecret(doc["web"].to<JsonObject>(), "password", c.web.password, maskSecrets);
 
+    JsonObject s = doc["sensor"].to<JsonObject>();
+    s["temperatureOffset"] = c.sensor.temperatureOffset;
+    s["humidityOffset"] = c.sensor.humidityOffset;
+    s["publishSeconds"] = c.sensor.publishSeconds;
+    s["temperatureDelta"] = c.sensor.temperatureDelta;
+    s["humidityDelta"] = c.sensor.humidityDelta;
+
     JsonArray pages = doc["pages"].to<JsonArray>();
     for (const PageConfig& p : c.pages) {
         JsonObject po = pages.add<JsonObject>();
@@ -290,6 +306,14 @@ void configToJson(const Config& c, JsonDocument& doc, bool maskSecrets) {
             tileToJson(tile, tiles.add<JsonObject>());
         }
     }
+}
+
+float panelTemperature() {
+    return hw::climateTemperature() + config.sensor.temperatureOffset;
+}
+
+float panelHumidity() {
+    return constrain(hw::climateHumidity() + config.sensor.humidityOffset, 0.0f, 100.0f);
 }
 
 String deviceId() {

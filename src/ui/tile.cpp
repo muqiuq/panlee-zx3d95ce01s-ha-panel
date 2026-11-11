@@ -46,6 +46,7 @@ const char* defaultIcon(TileType type) {
         case TileType::Lock: return LV_SYMBOL_EYE_CLOSE;
         case TileType::Fan: return LV_SYMBOL_LOOP;
         case TileType::PageLink: return LV_SYMBOL_RIGHT;
+        case TileType::PanelClimate: return LV_SYMBOL_HOME;
         default: return "";
     }
 }
@@ -270,6 +271,12 @@ void Tile::renderFace() {
         case TileType::PageLink:
             bigSymbol = true;
             break;
+        case TileType::PanelClimate: {
+            value = fmt(app::panelTemperature()) + "°";
+            const float h = app::panelHumidity();
+            sub = isnan(h) ? String("") : String(static_cast<int>(roundf(h))) + "% humidity";
+            break;
+        }
         default:
             break;
     }
@@ -353,7 +360,7 @@ void Tile::onMessage(const String& topic, const String& payload) {
 }
 
 void Tile::tick() {
-    if (cfg_.type == TileType::Clock) {
+    if (cfg_.type == TileType::Clock || cfg_.type == TileType::PanelClimate) {
         renderFace();
     }
     if (cfg_.type == TileType::Sensor && isDetailOpen()) {

@@ -9,7 +9,14 @@ PlatformIO CLI is not on `PATH`; use the full path:
 ~/.platformio/penv/bin/pio run -e smartpanlee -t upload -t monitor  # flash + serial monitor
 ```
 
-After the first USB flash, updates can be installed via the web interface (System → Firmware update) using `.pio/build/smartpanlee/firmware.bin`.
+After the first USB flash, updates can be installed via the web interface (System → Firmware update) using `.pio/build/smartpanlee/firmware.bin`, or in one step from the command line:
+
+```sh
+tools/ota.sh                                          # build only -> dist/ha-panel-<version>.bin
+tools/ota.sh ha-panel-a1b2c3.local                    # build + upload + wait for reboot
+PANEL_PASSWORD=secret tools/ota.sh 192.168.1.50       # with web interface password
+tools/ota.sh --no-build 192.168.1.50                  # upload the last build only
+```
 
 ### Flashing via USB-UART
 
@@ -52,6 +59,7 @@ Copy `include/secrets.example.h` to `include/secrets.h` (git-ignored) to preset 
 | `src/app/config.*` | Config model, JSON (de)serialization with secret masking and clamping, LittleFS storage |
 | `src/app/power.*` | Dim / sleep / wake based on LVGL inactivity |
 | `src/hw/display.*` | LovyanGFX device: panel, RGB bus, backlight, touch |
+| `src/hw/climate_sensor.*` | SHT20 on the touch I²C bus (I2C1, 0x40), non-blocking read every 10 s |
 | `src/net/wifi_manager.*` | STA connect with AP fallback (random password) |
 | `src/net/mqtt_service.*` | MQTT client task and queues |
 | `src/net/web_portal.*` | REST API, OTA, background upload, captive-portal DNS |
@@ -109,6 +117,7 @@ Not yet tested on the device. If something does not work, check:
 4. **Touch offset or mirrored** — adjust `offset_rotation` / `x_min`…`y_max` in `src/hw/display.cpp`.
 5. **Flicker while changing brightness** — if it also flickers at a steady partial brightness, try other PWM frequencies (e.g. 1 kHz or 44 kHz); if any redraw glitches the image, it is likely PSRAM bandwidth (lower `freq_write`).
 6. **PSRAM reported as 0** — check `board_build.arduino.memory_type = qio_opi` for the N16R8 module.
+7. **Built-in sensor not detected** — the serial log prints all devices found on I2C1 (touch is 0x38). The sensor is assumed to be an SHT20 at 0x40 on the touch bus (SDA 15 / SCL 6); adjust `src/hw/climate_sensor.cpp` if the schematic says otherwise.
 
 ## Reference Projects
 

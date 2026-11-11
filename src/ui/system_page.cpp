@@ -5,6 +5,7 @@
 #include <esp_system.h>
 
 #include "app/config.h"
+#include "hw/climate_sensor.h"
 #include "detail.h"
 #include "net/mqtt_service.h"
 #include "net/wifi_manager.h"
@@ -32,6 +33,16 @@ const char* resetReasonName() {
         case ESP_RST_BROWNOUT: return "Brownout";
         default: return "Unknown";
     }
+}
+
+String sensorText() {
+    if (!hw::climateAvailable()) {
+        return "not detected";
+    }
+    if (isnan(app::panelTemperature())) {
+        return "waiting...";
+    }
+    return String(app::panelTemperature(), 1) + " °C, " + String(app::panelHumidity(), 0) + " %";
 }
 
 lv_obj_t* addSection(lv_obj_t* parent, const char* title) {
@@ -78,7 +89,7 @@ void systemPageTick() {
     lv_label_set_text_fmt(deviceLabel,
                           "Firmware: %s (%s %s)\nUptime: %lud %02lu:%02lu:%02lu\n"
                           "Heap: %lu / %lu KB free\nPSRAM: %lu / %lu KB free\n"
-                          "Flash: %lu MB  Chip: %s rev %d, %d cores @ %lu MHz\nReset reason: %s",
+                          "Flash: %lu MB  Chip: %s rev %d, %d cores @ %lu MHz\nReset reason: %s\nSensor: %s",
                           FIRMWARE_VERSION, __DATE__, __TIME__,
                           (unsigned long)(up / 86400), (unsigned long)(up / 3600 % 24),
                           (unsigned long)(up / 60 % 60), (unsigned long)(up % 60),
@@ -86,7 +97,7 @@ void systemPageTick() {
                           (unsigned long)(ESP.getFreePsram() / 1024), (unsigned long)(ESP.getPsramSize() / 1024),
                           (unsigned long)(ESP.getFlashChipSize() / (1024 * 1024)), ESP.getChipModel(),
                           ESP.getChipRevision(), ESP.getChipCores(), (unsigned long)ESP.getCpuFreqMHz(),
-                          resetReasonName());
+                          resetReasonName(), sensorText().c_str());
 }
 
 namespace {

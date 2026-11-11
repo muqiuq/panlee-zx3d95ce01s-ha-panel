@@ -12,7 +12,7 @@ Everything is configured through a built-in web interface; all communication wit
 **On the panel**
 
 - Multiple pages, each with a **2×2 grid of configurable tiles** — switch pages with the ◀ ▶ buttons or by swiping on the bottom bar (no animations)
-- **14 tile types:** thermostat, switch, light, cover/blind, sensor, binary sensor, scene/script, button, media player, lock, fan, clock/date, page link, empty
+- **14 tile types:** thermostat, switch, light, cover/blind, sensor, binary sensor, scene/script, button, media player, lock, fan, clock/date, page link, empty — plus a tile for the **built-in temperature/humidity sensor**
 - Controlling tiles don't act on tap — they open a **detail page** with the actual controls
   (toggle, sliders, −/+ for the thermostat, open/stop/close, play/pause, …)
 - Per-tile **"Are you sure?"** confirmation
@@ -30,7 +30,7 @@ Everything is configured through a built-in web interface; all communication wit
 **Home Assistant**
 
 - Works with plain MQTT topics — e.g. [`mqtt_statestream`](https://www.home-assistant.io/integrations/mqtt_statestream/) for states and automations for commands
-- **MQTT discovery** for the panel itself: WiFi signal, uptime, display state, brightness, reboot, wake and a `notify` entity for messages
+- **MQTT discovery** for the panel itself: WiFi signal, uptime, display state, brightness, reboot, wake, built-in temperature & humidity and a `notify` entity for messages
 - Availability (LWT) and periodic telemetry
 
 ## Hardware
@@ -82,6 +82,7 @@ Further firmware updates can be installed from the web interface (**System → F
 |---|---|---|
 | `<base>/status` | panel → HA | `online` / `offline` (retained) |
 | `<base>/telemetry` | panel → HA | JSON: rssi, ip, uptime, heap, brightness, display state, page |
+| `<base>/sensor` | panel → HA | JSON: temperature, humidity of the built-in sensor (every 5 min or on change) |
 | `<base>/cmd/reboot` · `wake` · `sleep` | HA → panel | any |
 | `<base>/cmd/brightness` | HA → panel | 10–255 |
 | `<base>/cmd/page` | HA → panel | page number (1-based) |

@@ -25,6 +25,7 @@ enum class TileType : uint8_t {
     Fan,
     Clock,
     PageLink,
+    PanelClimate,
 };
 
 const char* tileTypeName(TileType type);
@@ -79,6 +80,14 @@ struct WebConfig {
     String password;
 };
 
+struct SensorConfig {
+    float temperatureOffset = 0;
+    float humidityOffset = 0;
+    uint16_t publishSeconds = 300;
+    float temperatureDelta = 0.3f;
+    float humidityDelta = 2.0f;
+};
+
 // Topic meaning depends on the type; see TYPES in web/index.html for per-type labels.
 struct TileConfig {
     TileType type = TileType::Empty;
@@ -115,10 +124,15 @@ struct Config {
     ThemeConfig theme;
     TimeConfig time;
     WebConfig web;
+    SensorConfig sensor;
     std::vector<PageConfig> pages;
 };
 
 extern Config config;
+
+// Built-in sensor readings with offsets applied; NAN if unavailable.
+float panelTemperature();
+float panelHumidity();
 
 String deviceId();
 Config defaultConfig();

@@ -41,7 +41,6 @@ void sliderChanged(lv_event_t*) {
 
 void sliderReleased(lv_event_t*) {
     applyBrightness();
-    app::configSave();
 }
 
 void sleepClicked(lv_event_t*) {

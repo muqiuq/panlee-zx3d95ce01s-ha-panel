@@ -5,6 +5,7 @@
 #include <WiFi.h>
 #include <esp_task_wdt.h>
 
+#include "hw/climate_sensor.h"
 #include "hw/display.h"
 #include "net/mqtt_service.h"
 #include "net/web_portal.h"
@@ -26,6 +27,9 @@ constexpr uint32_t kTelemetryIntervalMs = 60000;
 bool uiReady = false;
 uint32_t restartAtMs = 0;
 uint32_t lastTelemetryMs = 0;
+uint32_t lastSensorPublishMs = 0;
+float publishedTemperature = NAN;
+float publishedHumidity = NAN;
 uint32_t seenConnections = 0;
 bool mdnsStarted = false;
 uint32_t lastWifiOkMs = 0;
@@ -147,6 +151,58 @@ void publishDiscovery() {
         d["command_topic"] = base + "/cmd/message";
         publishDiscoveryEntity("notify", "message", d);
     }
+    if (hw::climateAvailable()) {
+        const String sensorTopic = base + "/sensor";
+        {
+            JsonDocument d;
+            d["name"] = "Temperature";
+            d["state_topic"] = sensorTopic;
+            d["value_template"] = "{{ value_json.temperature }}";
+            d["unit_of_measurement"] = "°C";
+            d["device_class"] = "temperature";
+            d["state_class"] = "measurement";
+            publishDiscoveryEntity("sensor", "temperature", d);
+        }
+        {
+            JsonDocument d;
+            d["name"] = "Humidity";
+            d["state_topic"] = sensorTopic;
+            d["value_template"] = "{{ value_json.humidity }}";
+            d["unit_of_measurement"] = "%";
+            d["device_class"] = "humidity";
+            d["state_class"] = "measurement";
+            publishDiscoveryEntity("sensor", "humidity", d);
+        }
+    }
+}
+
+void publishSensor() {
+    const float t = panelTemperature();
+    const float h = panelHumidity();
+    JsonDocument doc;
+    doc["temperature"] = roundf(t * 10) / 10;
+    doc["humidity"] = roundf(h * 10) / 10;
+    String out;
+    serializeJson(doc, out);
+    net::mqttPublish(config.mqtt.baseTopic + "/sensor", out, true);
+    publishedTemperature = t;
+    publishedHumidity = h;
+    lastSensorPublishMs = millis();
+}
+
+// Publishes every `publishSeconds`, or earlier when a value moved by more than the configured delta.
+void maintainSensorPublishing(bool force) {
+    if (!hw::climateAvailable() || !net::mqttConnected() || isnan(hw::climateTemperature())) {
+        return;
+    }
+    const auto& s = config.sensor;
+    const bool due = millis() - lastSensorPublishMs >= s.publishSeconds * 1000UL;
+    const bool changed = isnan(publishedTemperature) ||
+                         fabsf(panelTemperature() - publishedTemperature) >= s.temperatureDelta ||
+                         (!isnan(panelHumidity()) && fabsf(panelHumidity() - publishedHumidity) >= s.humidityDelta);
+    if (force || due || changed) {
+        publishSensor();
+    }
 }
 
 void handleCommand(const String& cmd, const String& payload) {
@@ -191,11 +247,13 @@ void processMqtt() {
         publishDiscovery();
         publishTelemetry();
         lastTelemetryMs = millis();
+        maintainSensorPublishing(true);
     }
     if (net::mqttConnected() && millis() - lastTelemetryMs > kTelemetryIntervalMs) {
         lastTelemetryMs = millis();
         publishTelemetry();
     }
+    maintainSensorPublishing(false);
 }
 
 void maintainMdns() {
@@ -238,7 +296,8 @@ void setup() {
     net::wifiBegin();
     configureTime();
 
-    if (!hw::displayBegin()) {
+    const bool displayOk = hw::displayBegin();
+    if (!displayOk) {
         Serial.println("Display init failed");
     } else if (!ui::lvglBegin()) {
         Serial.println("LVGL init failed");
@@ -249,6 +308,8 @@ void setup() {
         powerBegin();
         uiReady = true;
     }
+    // Touch init already set up the shared I2C bus.
+    hw::climateBegin(displayOk);
 
     net::mqttBegin();
     configureMqtt();
@@ -263,6 +324,7 @@ void loop() {
     net::webLoop();
     maintainMdns();
     maintainWifiWatchdog();
+    hw::climateLoop();
     processMqtt();
     if (uiReady) {
         powerLoop();

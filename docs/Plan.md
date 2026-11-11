@@ -188,6 +188,7 @@ The panel works with plain MQTT topics, so any HA setup that bridges entities to
 |---|---|---|
 | `<base>/status` | panel → HA | `online` / `offline` (retained, LWT) |
 | `<base>/telemetry` | panel → HA | JSON: rssi, ip, uptime, heap, psram, brightness, display, page |
+| `<base>/sensor` | panel → HA | JSON: temperature, humidity (built-in SHT20, offsets applied; interval or on change) |
 | `<base>/cmd/reboot` | HA → panel | any |
 | `<base>/cmd/wake`, `<base>/cmd/sleep` | HA → panel | any |
 | `<base>/cmd/brightness` | HA → panel | 10–255 |

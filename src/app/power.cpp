@@ -13,12 +13,28 @@ namespace {
 
 PowerState state = PowerState::Awake;
 uint32_t lastCheckMs = 0;
+bool blanked = false;
+
+void applyBacklight() {
+    if (blanked || state == PowerState::Asleep) {
+        hw::setBacklight(0);
+    } else if (state == PowerState::Dimmed) {
+        hw::setBacklight(min(config.display.dimBrightness, config.display.brightness));
+    } else {
+        hw::setBacklight(config.display.brightness);
+    }
+}
 
 }  // namespace
 
+void powerBlank(bool blank) {
+    blanked = blank;
+    applyBacklight();
+}
+
 void powerBegin() {
     state = PowerState::Awake;
-    hw::setBacklight(config.display.brightness);
+    applyBacklight();
 }
 
 void powerLoop() {
@@ -37,11 +53,11 @@ void powerLoop() {
     } else if (d.dimSeconds > 0 && inactive >= d.dimSeconds * 1000UL) {
         if (state == PowerState::Awake) {
             state = PowerState::Dimmed;
-            hw::setBacklight(min(d.dimBrightness, d.brightness));
+            applyBacklight();
         }
     } else if (state == PowerState::Dimmed) {
         state = PowerState::Awake;
-        hw::setBacklight(d.brightness);
+        applyBacklight();
     }
 }
 
@@ -64,12 +80,12 @@ bool powerSleeping() {
 void powerWake() {
     state = PowerState::Awake;
     lv_display_trigger_activity(nullptr);
-    hw::setBacklight(config.display.brightness);
+    applyBacklight();
 }
 
 void powerSleep() {
     state = PowerState::Asleep;
-    hw::setBacklight(0);
+    applyBacklight();
     ui::detailClose();
     if (config.display.returnToFirstPage) {
         ui::showPage(0);
@@ -77,9 +93,7 @@ void powerSleep() {
 }
 
 void powerApply() {
-    if (state == PowerState::Awake) {
-        hw::setBacklight(config.display.brightness);
-    }
+    applyBacklight();
 }
 
 }  // namespace app
