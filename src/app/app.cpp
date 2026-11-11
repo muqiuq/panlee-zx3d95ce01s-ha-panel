@@ -3,6 +3,7 @@
 #include <ArduinoJson.h>
 #include <ESPmDNS.h>
 #include <WiFi.h>
+#include <esp_task_wdt.h>
 
 #include "hw/display.h"
 #include "net/mqtt_service.h"
@@ -27,6 +28,7 @@ uint32_t restartAtMs = 0;
 uint32_t lastTelemetryMs = 0;
 uint32_t seenConnections = 0;
 bool mdnsStarted = false;
+uint32_t lastWifiOkMs = 0;
 
 void configureTime() {
     configTzTime(config.time.timezone.c_str(), config.time.ntpServer.c_str());
@@ -205,10 +207,32 @@ void maintainMdns() {
     }
 }
 
+void maintainWifiWatchdog() {
+    const auto& w = config.wifi;
+    // Someone using the setup AP must not be interrupted by a reboot.
+    if (!w.rebootOnLoss || w.ssid.isEmpty() || net::wifiState() == net::WifiState::Connected ||
+        WiFi.softAPgetStationNum() > 0) {
+        lastWifiOkMs = millis();
+        return;
+    }
+    if (millis() - lastWifiOkMs > w.rebootAfterMinutes * 60000UL) {
+        Serial.printf("WiFi lost for %u min, rebooting\n", w.rebootAfterMinutes);
+        ESP.restart();
+    }
+}
+
 }  // namespace
+
+uint32_t wifiOfflineSeconds() {
+    return (millis() - lastWifiOkMs) / 1000;
+}
 
 void setup() {
     Serial.begin(115200);
+
+    // Reboot if the main loop hangs for 30 s.
+    esp_task_wdt_init(kWatchdogSeconds, true);
+    esp_task_wdt_add(nullptr);
 
     configBegin();
     net::wifiBegin();
@@ -234,9 +258,11 @@ void setup() {
 }
 
 void loop() {
+    esp_task_wdt_reset();
     net::wifiLoop();
     net::webLoop();
     maintainMdns();
+    maintainWifiWatchdog();
     processMqtt();
     if (uiReady) {
         powerLoop();

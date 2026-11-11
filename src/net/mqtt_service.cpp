@@ -2,6 +2,7 @@
 
 #include <PubSubClient.h>
 #include <WiFi.h>
+#include <esp_task_wdt.h>
 
 #include <atomic>
 #include <deque>
@@ -82,7 +83,9 @@ void flushOutbound() {
 void task(void*) {
     uint32_t lastAttemptMs = 0;
     bool firstAttempt = true;
+    esp_task_wdt_add(nullptr);
     for (;;) {
+        esp_task_wdt_reset();
         {
             std::lock_guard<std::mutex> lock(mutex);
             if (settingsChanged) {

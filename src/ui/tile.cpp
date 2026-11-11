@@ -274,10 +274,6 @@ void Tile::renderFace() {
             break;
     }
 
-    if (pending_) {
-        sub = "Sending...";
-    }
-
     const char* symbol = iconSymbol(cfg_.icon, cfg_.type);
     if (bigSymbol) {
         lv_label_set_text(icon_, "");
@@ -349,7 +345,6 @@ void Tile::onMessage(const String& topic, const String& payload) {
     if (!matched) {
         return;
     }
-    pending_ = false;
     lastUpdateMs_ = millis();
     renderFace();
     if (isDetailOpen()) {
@@ -358,13 +353,6 @@ void Tile::onMessage(const String& topic, const String& payload) {
 }
 
 void Tile::tick() {
-    if (pending_ && millis() - pendingSinceMs_ > 5000) {
-        pending_ = false;
-        renderFace();
-        if (isDetailOpen()) {
-            renderDetail();
-        }
-    }
     if (cfg_.type == TileType::Clock) {
         renderFace();
     }
@@ -405,15 +393,7 @@ void Tile::send(const String& topic, const String& payload, const String& questi
     if (topic.isEmpty()) {
         return;
     }
-    runConfirmed(cfg_.confirm, question.c_str(), [this, topic, payload]() {
-        net::mqttPublish(topic, payload, false);
-        pending_ = true;
-        pendingSinceMs_ = millis();
-        renderFace();
-        if (isDetailOpen()) {
-            renderDetail();
-        }
-    });
+    runConfirmed(cfg_.confirm, question.c_str(), [topic, payload]() { net::mqttPublish(topic, payload, false); });
 }
 
 void Tile::openDetail() {
@@ -518,9 +498,6 @@ void Tile::renderDetail() {
         default:
             value = onOffLabel();
             break;
-    }
-    if (pending_) {
-        sub = "Sending...";
     }
     lv_label_set_text(dValue_, value.c_str());
     lv_label_set_text(dSub_, sub.c_str());

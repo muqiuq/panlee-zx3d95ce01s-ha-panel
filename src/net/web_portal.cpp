@@ -119,6 +119,7 @@ void handleStatus() {
     dev["cores"] = ESP.getChipCores();
     dev["cpuMhz"] = ESP.getCpuFreqMHz();
     dev["resetReason"] = resetReason();
+    dev["watchdogSeconds"] = app::kWatchdogSeconds;
     time_t now = time(nullptr);
     if (now > 1600000000) {
         char buf[32];
@@ -139,6 +140,9 @@ void handleStatus() {
     w["dns"] = WiFi.dnsIP().toString();
     w["mac"] = WiFi.macAddress();
     w["bssid"] = WiFi.BSSIDstr();
+    w["rebootOnLoss"] = app::config.wifi.rebootOnLoss;
+    w["rebootAfterMinutes"] = app::config.wifi.rebootAfterMinutes;
+    w["offlineSeconds"] = wifiState() == WifiState::Connected ? 0 : app::wifiOfflineSeconds();
     if (wifiState() == WifiState::AccessPoint) {
         w["apSsid"] = apSsid();
         w["apIp"] = WiFi.softAPIP().toString();

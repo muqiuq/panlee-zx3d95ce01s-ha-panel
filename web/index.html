@@ -175,6 +175,11 @@ progress{width:100%}
       <datalist id="ssids"></datalist>
       <label class="f"><span>Password</span><input type="password" data-k="wifi.password" maxlength="64" autocomplete="new-password"></label>
       <label class="f"><span>Hostname</span><input data-k="wifi.hostname" maxlength="32"></label>
+      <div class="g2">
+        <label class="f chk"><input type="checkbox" data-k="wifi.rebootOnLoss"><span>Reboot when WiFi is lost</span></label>
+        <label class="f"><span>after (minutes)</span><input type="number" min="1" max="1440" data-k="wifi.rebootAfterMinutes"></label>
+      </div>
+      <p class="muted">Not while a device is connected to the setup access point.</p>
     </div>
     <div class="card">
       <h2>MQTT</h2>
@@ -297,8 +302,8 @@ async function loadStatus(){
   const lm=s.message;
   $('#msgLast').replaceChildren(lm?kv([['Time',lm.time],['Level',lm.level],['Title',lm.title],['Text',lm.text],['Buttons',lm.buttons],['ID',lm.id],['Answer',lm.open?'(open)':lm.answer]]):'No messages');
   $('#statusCards').replaceChildren(
-    card('Device',kv([['Hostname',d.hostname],['Firmware',d.firmware],['Build',d.build],['Time',d.time],['Uptime',fmtUp(d.uptime)],['Reset reason',d.resetReason],['Heap',fmtBytes(d.heapFree)+' / '+fmtBytes(d.heapTotal)],['PSRAM',fmtBytes(d.psramFree)+' / '+fmtBytes(d.psramTotal)],['Flash',fmtBytes(d.flash)],['Filesystem',fmtBytes(d.fsUsed)+' / '+fmtBytes(d.fsTotal)],['Chip',d.chip+' rev '+d.chipRevision+', '+d.cores+' cores @ '+d.cpuMhz+' MHz']])),
-    card('WiFi',kv([['State',w.state],['SSID',w.ssid],['RSSI',w.rssi+' dBm'],['Channel',w.channel],['IP',w.ip],['Subnet',w.subnet],['Gateway',w.gateway],['DNS',w.dns],['MAC',w.mac],['BSSID',w.bssid],['Setup AP',w.apSsid],['AP IP',w.apIp]])),
+    card('Device',kv([['Hostname',d.hostname],['Firmware',d.firmware],['Build',d.build],['Time',d.time],['Uptime',fmtUp(d.uptime)],['Reset reason',d.resetReason],['Watchdog',d.watchdogSeconds+' s'],['Heap',fmtBytes(d.heapFree)+' / '+fmtBytes(d.heapTotal)],['PSRAM',fmtBytes(d.psramFree)+' / '+fmtBytes(d.psramTotal)],['Flash',fmtBytes(d.flash)],['Filesystem',fmtBytes(d.fsUsed)+' / '+fmtBytes(d.fsTotal)],['Chip',d.chip+' rev '+d.chipRevision+', '+d.cores+' cores @ '+d.cpuMhz+' MHz']])),
+    card('WiFi',kv([['State',w.state],['SSID',w.ssid],['RSSI',w.rssi+' dBm'],['Channel',w.channel],['IP',w.ip],['Subnet',w.subnet],['Gateway',w.gateway],['DNS',w.dns],['MAC',w.mac],['BSSID',w.bssid],['Setup AP',w.apSsid],['AP IP',w.apIp],['Offline for',w.offlineSeconds?fmtUp(w.offlineSeconds):''],['Reboot on loss',w.rebootOnLoss?'after '+w.rebootAfterMinutes+' min':'off']])),
     card('MQTT',kv([['State',m.state],['Broker',m.host?m.host+':'+m.port:'-'],['Base topic',m.baseTopic]])),
     card('Display',kv([['State',s.display.state],['Page',s.display.page+' / '+s.display.pages],['Background',s.display.background?'yes':'no']])),
     card('About',kv([['Author',s.author.name],['Email',s.author.email],['Web',s.author.web]])));

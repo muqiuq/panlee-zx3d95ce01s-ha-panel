@@ -35,8 +35,6 @@ private:
     float maxSeen_ = NAN;
     float target_ = NAN;
     uint32_t lastUpdateMs_ = 0;
-    bool pending_ = false;
-    uint32_t pendingSinceMs_ = 0;
 
     // Detail page widgets, valid while this tile's detail page is open.
     lv_obj_t* dSwitch_ = nullptr;

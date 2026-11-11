@@ -34,6 +34,8 @@ struct WifiConfig {
     String ssid;
     String password;
     String hostname;
+    bool rebootOnLoss = true;
+    uint16_t rebootAfterMinutes = 5;
 };
 
 struct MqttConfig {

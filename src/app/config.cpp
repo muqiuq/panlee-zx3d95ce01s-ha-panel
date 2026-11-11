@@ -179,6 +179,8 @@ void configFromJson(JsonVariantConst j, Config& c) {
     readStr(w["ssid"], c.wifi.ssid, 32);
     readSecret(w["password"], c.wifi.password);
     readStr(w["hostname"], c.wifi.hostname, 32);
+    readBool(w["rebootOnLoss"], c.wifi.rebootOnLoss);
+    readNum<uint16_t>(w["rebootAfterMinutes"], c.wifi.rebootAfterMinutes, 1, 1440);
 
     JsonVariantConst m = j["mqtt"];
     readStr(m["host"], c.mqtt.host, 64);
@@ -241,6 +243,8 @@ void configToJson(const Config& c, JsonDocument& doc, bool maskSecrets) {
     w["ssid"] = c.wifi.ssid;
     putSecret(w, "password", c.wifi.password, maskSecrets);
     w["hostname"] = c.wifi.hostname;
+    w["rebootOnLoss"] = c.wifi.rebootOnLoss;
+    w["rebootAfterMinutes"] = c.wifi.rebootAfterMinutes;
 
     JsonObject m = doc["mqtt"].to<JsonObject>();
     m["host"] = c.mqtt.host;

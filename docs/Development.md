@@ -39,6 +39,8 @@ Copy `include/secrets.example.h` to `include/secrets.h` (git-ignored) to preset 
   All LVGL calls and config changes happen here.
 - **MQTT task (core 0):** connect/reconnect, subscribe, publish. Communicates only via mutex-protected queues (`src/net/mqtt_service.cpp`).
 - Config changes from the web interface call `app::applyConfig()`, which rebuilds the UI (`ui::rebuild`) and reconfigures MQTT/WiFi/time as needed.
+- **Watchdogs:** the main loop and the MQTT task are registered with the ESP task watchdog (30 s, panic → reboot, reset reason "task watchdog").
+  If WiFi is configured and stays disconnected longer than `wifi.rebootAfterMinutes` (default 5), the panel reboots — disable via `wifi.rebootOnLoss`; suspended while a client is on the setup AP.
 
 ## Source Layout
 
